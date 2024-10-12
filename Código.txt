@@ -1,0 +1,84 @@
+#define F_CPU 16000000UL    //definição da frequência de clock para uso da biblioteca delay
+                         
+#include <avr/io.h>
+#include <LiquidCrystal.h> 
+#include <util/delay.h> 
+
+#define  MOTOR    PC0
+#define  BOT      PC1
+ 
+void init_dsp(unsigned char , unsigned char );
+void put_message(unsigned char l, unsigned char c, char * pm);
+void put_number_i(unsigned char , unsigned char c, long int , unsigned int );
+
+unsigned int segundo = 0;
+
+LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+ 
+int main(void) 
+{
+
+init_dsp(2, 16);                                //Inicia display LCD
+put_message(0,0,"  Pressione B1  ");            //Imprime msg no display
+DDRC = 0b00000001;                              //Definindo PC0 como saída e PC1 como entrada
+
+  for(;;)  
+  {
+    if ((PINC & (1 << BOT)))                    //Testa se o botão B1 foi pressionado
+  {
+    PORTC |= (1 << (MOTOR));                    //Liga o motor
+    
+    put_message(0,0,"                ");        //Imprime msg no display
+    put_message(0,1,"B1 pressionado");          //
+    put_message(1,4,"Running");                 //
+    
+    for(int i=0;i<11;i++)                       //Gera atrasos de 1 segundo enquanto imprime o tempo no display
+      {      
+         _delay_ms(1000);
+         segundo++;
+         put_number_i(1,13,segundo,3);
+         if(segundo > 10)
+         {
+          segundo = 0;
+         }
+      }      
+    
+    PORTC &= ~(1 << (MOTOR));                   //Desliga o motor
+    put_message(0,0,"                ");        //Imprime msg no display
+    put_message(0,0,"  Pressione B1  ");
+    put_message(1,1,"                ");
+    put_message(1,4,"Stop");
+  }
+  } 
+} 
+
+/*---------------------------Funcao inica LCD-----------------------*/
+
+void init_dsp(unsigned char l, unsigned char c)
+{    
+  lcd.begin(c,l); 
+}
+
+/*---------------Funcao de escrita de String de no LCD-------------*/
+
+ void put_message(unsigned char l, unsigned char c, char * pm) 
+ {   lcd.setCursor(c,l);
+  lcd.print(pm); 
+ } 
+ 
+/*-----------------Funcao de escrita numerica no LCD---------------*/
+
+
+void  put_number_i(unsigned char l, unsigned char c,long int num, unsigned int ndig)
+{ 
+  unsigned int i;   
+  if(ndig > 4)     
+    ndig=4;   
+  for(i=0;i<ndig;i++)   
+  {      
+    lcd.setCursor(c+i,l);     
+    lcd.print(' ');   
+  }      
+  lcd.setCursor(c,l);   
+  lcd.print(num);  
+}
